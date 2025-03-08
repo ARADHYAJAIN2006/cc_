@@ -1,0 +1,186 @@
+LEVEL 0:
+
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct Node {
+    int data;
+    struct Node* prev;
+    struct Node* next;
+} Node;
+
+Node* head = NULL;
+
+void insertAtHead(int data) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->data = data;
+    newNode->prev = NULL;
+    newNode->next = head;
+    if (head != NULL)
+        head->prev = newNode;
+    head = newNode;
+}
+
+void insertAtTail(int data) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->data = data;
+    newNode->next = NULL;
+    
+    if (head == NULL) {
+        newNode->prev = NULL;
+        head = newNode;
+        return;
+    }
+
+    Node* temp = head;
+    while (temp->next != NULL)
+        temp = temp->next;
+
+    temp->next = newNode;
+    newNode->prev = temp;
+}
+
+void traverseForward() {
+    Node* temp = head;
+    while (temp) {
+        printf("%d -> ", temp->data);
+        temp = temp->next;
+    }
+    printf("NULL\n");
+}
+
+void traverseBackward() {
+    Node* temp = head;
+    if (!temp) return;
+    
+    while (temp->next)
+        temp = temp->next;
+    
+    while (temp) {
+        printf("%d -> ", temp->data);
+        temp = temp->prev;
+    }
+    printf("NULL\n");
+}
+
+int main() {
+    insertAtHead(3);
+    insertAtHead(2);
+    insertAtHead(1);
+    insertAtTail(4);
+    insertAtTail(5);
+
+    printf("Forward Traversal:\n");
+    traverseForward();
+    
+    printf("Backward Traversal:\n");
+    traverseBackward();
+
+    return 0;
+}
+
+LEVEL 2:
+
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    int start;
+    int end;
+} Interval;
+
+Interval intervals[100];
+int count = 0;
+
+int compare(const void* a, const void* b) {
+    return ((Interval*)a)->start - ((Interval*)b)->start;
+}
+
+void addInterval(int start, int end) {
+    intervals[count].start = start;
+    intervals[count].end = end;
+    count++;
+
+    qsort(intervals, count, sizeof(Interval), compare);
+
+    int idx = 0;
+    for (int i = 1; i < count; i++) {
+        if (intervals[idx].end >= intervals[i].start) {
+            intervals[idx].end = (intervals[idx].end > intervals[i].end) ? intervals[idx].end : intervals[i].end;
+        } else {
+            idx++;
+            intervals[idx] = intervals[i];
+        }
+    }
+    count = idx + 1;
+}
+
+void getIntervals() {
+    for (int i = 0; i < count; i++)
+        printf("[%d, %d] ", intervals[i].start, intervals[i].end);
+    printf("\n");
+}
+
+int main() {
+    addInterval(1, 5);
+    addInterval(6, 8);
+    addInterval(4, 7);
+    
+    printf("Merged Intervals: ");
+    getIntervals();
+
+    return 0;
+}
+
+LEVEL 3:
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+typedef struct {
+    int key;
+    int value;
+    time_t expiry;
+} CacheEntry;
+
+CacheEntry cache[100];
+int size = 0;
+
+void removeExpired() {
+    time_t now = time(NULL);
+    for (int i = 0; i < size; i++) {
+        if (cache[i].expiry < now) {
+            cache[i] = cache[size - 1];
+            size--;
+            i--;
+        }
+    }
+}
+
+void set(int key, int value, int expiryTime) {
+    removeExpired();
+    cache[size].key = key;
+    cache[size].value = value;
+    cache[size].expiry = time(NULL) + expiryTime;
+    size++;
+}
+
+int get(int key) {
+    removeExpired();
+    for (int i = 0; i < size; i++) {
+        if (cache[i].key == key)
+            return cache[i].value;
+    }
+    return -1;
+}
+
+int main() {
+    set(1, 100, 5);
+    sleep(3);
+    printf("Value of key 1: %d\n", get(1));
+    sleep(3);
+    printf("Value of key 1 after expiry: %d\n", get(1));
+
+    return 0;
+}
